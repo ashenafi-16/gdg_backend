@@ -1,6 +1,6 @@
-from rest_framework import generics, status,permissions
+from rest_framework import generics, status,permissions,serializers
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny,IsAdminUser
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework.exceptions import ValidationError, PermissionDenied
@@ -12,9 +12,9 @@ from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiTypes
 from django.conf import settings
 import secrets
 from django.core.mail import send_mail
-
-from .models import UserSettings,PasswordResetToken
+from .models import UserSettings,PasswordResetToken  
 from rest_framework.views import APIView
+
 from .serializers import (
     UserRegistrationSerializer,
     UserLoginSerializer,
@@ -22,7 +22,8 @@ from .serializers import (
     PasswordResetRequestSerializer,
     PasswordResetConfirmSerializer,
     LogoutSerializer,
-    UserSettingsSerializer
+    UserSettingsSerializer,
+    LogoutAllSerializer,
 )
 
 User = get_user_model()
@@ -96,27 +97,53 @@ class LoginUserView(generics.GenericAPIView):
         }, status=status.HTTP_200_OK)
 
 
-class UserProfileView(generics.RetrieveUpdateAPIView):
+
+
+class CurrentUserProfileView(generics.RetrieveUpdateAPIView):
+    """View for the currently authenticated user (no user_id in URL)"""
     serializer_class = UserProfileSerializer
     permission_classes = [IsAuthenticated]
 
     def get_object(self):
-        user_id = self.kwargs.get('user_id')
-        if user_id:
-            if not self.request.user.is_staff:
-                raise PermissionDenied("Only admin can view other profiles")
-            return get_object_or_404(User, id=user_id)
         return self.request.user
 
     @extend_schema(
-        operation_id='get_user_profile',
-        description='Get current or specific user profile (admin only)',
+        operation_id='get_current_user_profile',
+        description='Get current user profile',
+    )
+    def get(self, request, *args, **kwargs):
+        return super().get(request, *args, **kwargs)
+
+    @extend_schema(
+        operation_id='update_current_user_profile',
+        description='Update the current authenticated user profile'
+    )
+    def put(self, request, *args, **kwargs):
+        return super().put(request, *args, **kwargs)
+
+    @extend_schema(
+        operation_id='partial_update_current_user_profile',
+        description='Partially update the current user profile'
+    )
+    def patch(self, request, *args, **kwargs):
+        return super().patch(request, *args, **kwargs)
+
+
+class AdminUserProfileView(generics.RetrieveUpdateAPIView):
+    """Admin-only view for specific users (requires user_id in URL)"""
+    serializer_class = UserProfileSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    lookup_url_kwarg = 'user_id'
+
+    @extend_schema(
+        operation_id='get_specific_user_profile',
+        description='Get specific user profile (admin only)',
         parameters=[
             OpenApiParameter(
                 name='user_id',
                 type=OpenApiTypes.INT,
                 location=OpenApiParameter.PATH,
-                required=False,
+                required=True,
                 description='User ID (admin only)'
             )
         ]
@@ -125,19 +152,36 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
         return super().get(request, *args, **kwargs)
 
     @extend_schema(
-        operation_id='update_user_profile',
-        description='Update the current authenticated user profile'
+        operation_id='update_specific_user_profile',
+        description='Update specific user profile (admin only)',
+        parameters=[
+            OpenApiParameter(
+                name='user_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                required=True,
+                description='User ID (admin only)'
+            )
+        ]
     )
     def put(self, request, *args, **kwargs):
         return super().put(request, *args, **kwargs)
 
     @extend_schema(
-        operation_id='partial_update_user_profile',
-        description='Partially update the current user profile'
+        operation_id='partial_update_specific_user_profile',
+        description='Partially update specific user profile (admin only)',
+        parameters=[
+            OpenApiParameter(
+                name='user_id',
+                type=OpenApiTypes.INT,
+                location=OpenApiParameter.PATH,
+                required=True,
+                description='User ID (admin only)'
+            )
+        ]
     )
     def patch(self, request, *args, **kwargs):
         return super().patch(request, *args, **kwargs)
-
 
 class PasswordResetRequestView(generics.GenericAPIView):
     serializer_class = PasswordResetRequestSerializer
@@ -229,6 +273,7 @@ class LogoutView(generics.GenericAPIView):
 
 class LogoutAllView(generics.GenericAPIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = LogoutAllSerializer
 
     @extend_schema(
         operation_id='logout_all_sessions',
@@ -247,6 +292,7 @@ class LogoutAllView(generics.GenericAPIView):
 
 class UserSettingsView(APIView):
     permission_classes = [IsAuthenticated]
+    serializer_class = UserSettingsSerializer
 
     def get(self, request):
         settings_obj, _ = UserSettings.objects.get_or_create(user=request.user)

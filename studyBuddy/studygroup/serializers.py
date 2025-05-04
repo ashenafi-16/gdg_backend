@@ -5,9 +5,10 @@ from .models import (
     Session, GroupChat, ChatAttachment
 )
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from drf_spectacular.utils import extend_schema_serializer, extend_schema_field
+from typing import Dict, Any, List
 
 User = get_user_model()
-
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -19,7 +20,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
-    def validate(self, attrs):
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         data = super().validate(attrs)
         data.update({
             'user': UserSerializer(self.user).data
@@ -41,6 +42,7 @@ class GroupMembershipSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'role', 'joined_at', 'is_active']
 
 
+@extend_schema_serializer(component_name="DashboardStudyGroup")
 class StudyGroupSerializer(serializers.ModelSerializer):
     subject = SubjectSerializer(read_only=True)
     creator = UserSerializer(read_only=True)
@@ -57,18 +59,15 @@ class StudyGroupSerializer(serializers.ModelSerializer):
             'member_count', 'last_activity', 'is_member', 'membership'
         ]
     
-    def get_is_member(self, obj):
+    def get_is_member(self, obj: StudyGroup) -> bool:
         request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            return obj.members.filter(id=request.user.id).exists()
-        return False
+        return request and request.user.is_authenticated and obj.members.filter(id=request.user.id).exists()
     
-    def get_membership(self, obj):
+    def get_membership(self, obj: StudyGroup) -> Dict[str, Any]:
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             membership = obj.memberships.filter(user=request.user).first()
-            if membership:
-                return GroupMembershipSerializer(membership).data
+            return GroupMembershipSerializer(membership).data if membership else None
         return None
 
 
@@ -83,7 +82,7 @@ class StudyGroupCreateSerializer(serializers.ModelSerializer):
         model = StudyGroup
         fields = ['name', 'description', 'subject_id', 'privacy']
     
-    def create(self, validated_data):
+    def create(self, validated_data: Dict[str, Any]) -> StudyGroup:
         validated_data['creator'] = self.context['request'].user
         return super().create(validated_data)
 
@@ -101,7 +100,7 @@ class SessionSerializer(serializers.ModelSerializer):
             'meeting_link', 'created_at', 'duration'
         ]
     
-    def get_duration(self, obj):
+    def get_duration(self, obj: Session) -> str:
         return obj.duration
 
 
@@ -113,15 +112,17 @@ class ChatAttachmentSerializer(serializers.ModelSerializer):
         model = ChatAttachment
         fields = ['id', 'file', 'file_url', 'file_size', 'file_type', 'uploaded_at']
         read_only_fields = ['file_type', 'uploaded_at']
-    
-    def get_file_url(self, obj):
+
+    @extend_schema_field(serializers.CharField())
+    def get_file_url(self, obj: ChatAttachment) -> str:
         request = self.context.get('request')
         if obj.file and request:
             return request.build_absolute_uri(obj.file.url)
         return None
-    
-    def get_file_size(self, obj):
-        return obj.file.size
+
+    @extend_schema_field(serializers.IntegerField())
+    def get_file_size(self, obj: ChatAttachment) -> int:
+        return obj.file.size if obj.file else 0
 
 
 class GroupChatSerializer(serializers.ModelSerializer):
@@ -138,7 +139,7 @@ class GroupChatSerializer(serializers.ModelSerializer):
         ]
         read_only_fields = ['user', 'created_at', 'updated_at']
     
-    def create(self, validated_data):
+    def create(self, validated_data: Dict[str, Any]) -> GroupChat:
         attachments_data = self.context.get('request').FILES
         chat = GroupChat.objects.create(
             user=self.context['request'].user,

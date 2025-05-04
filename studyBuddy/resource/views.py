@@ -13,7 +13,8 @@ from .serializers import (
     ResourceSerializer,
     ResourceCreateSerializer,
     ResourceUpdateSerializer,
-    ResourceCategorySerializer
+    ResourceCategorySerializer,
+    ResourceDownloadSerializer,
 )
 from .filters import ResourceFilter
 from .permissions import IsResourceOwnerOrReadOnly
@@ -59,6 +60,7 @@ class ResourceDetailAPI(generics.RetrieveUpdateDestroyAPIView):
 class ResourceDownloadAPI(generics.RetrieveAPIView):
     queryset = Resource.objects.all()
     permission_classes = [permissions.IsAuthenticated]
+    serializer_class = ResourceDownloadSerializer
 
     def get(self, request, *args, **kwargs):
         resource = self.get_object()
@@ -86,7 +88,6 @@ class MyResourcesAPI(generics.ListAPIView):
     filterset_class = ResourceFilter
 
     def get_queryset(self):
-        return Resource.objects.filter(
-            uploaded_by=self.request.user
-        ).select_related('uploaded_by')\
-         .prefetch_related('groups', 'categories')
+        if getattr(self, 'swagger_fake_view', False):
+            return Resource.objects.none()
+        return Resource.objects.filter(owner=self.request.user)
