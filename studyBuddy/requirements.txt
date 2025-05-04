@@ -15,6 +15,7 @@ cryptography==44.0.0
 defusedxml==0.8.0rc2
 distlib==0.3.8
 distro==1.9.0
+dj-database-url==2.3.0
 Django==5.1.1
 django-allauth==65.3.0
 django-cors-headers==4.6.0
@@ -22,6 +23,7 @@ django-countries==7.6.1
 django-crispy-forms==2.3
 django-debug-toolbar==4.4.6
 django-deep-serializer==0.1.3
+django-environ==0.12.0
 django-filter==24.3
 djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.1
