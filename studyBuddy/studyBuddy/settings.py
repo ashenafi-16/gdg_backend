@@ -25,8 +25,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEBUG","False").lower() == "true"
 
-SECRET_KEY = os.environ.get("SECRET_KEY")
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS")
+SECRET_KEY = "sneje_-lq&85f7^(18%8&o1r3)t-l&nc(8+rxd8-1g0dbfi48c"
+# os.environ.get("SECRET_KEY")
+
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
 
 
 
@@ -115,7 +117,8 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-database_url = os.environ.get("DATABASE_URL")
+database_url = os.environ.get('DATABASE_URL', 'sqlite:///db.sqlite3')
+
 DATABASES['default'] = dj_database_url.parse(database_url)
 
 
