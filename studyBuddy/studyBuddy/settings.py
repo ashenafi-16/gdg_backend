@@ -28,7 +28,7 @@ DEBUG = os.environ.get("DEBUG","False").lower() == "true"
 SECRET_KEY = "sneje_-lq&85f7^(18%8&o1r3)t-l&nc(8+rxd8-1g0dbfi48c"
 # os.environ.get("SECRET_KEY")
 
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS").split(",")
 
 
 
