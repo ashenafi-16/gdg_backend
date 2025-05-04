@@ -23,9 +23,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-ALLOWED_HOSTS = ["*"]
-SECRET_KEY='9i*z$!9g0@44j(ez%!#fwlk0q*=&%pcba)9bskbuqpmql3o@sw'
+DEBUG = os.environ.get("DEBUG","False").lower() == "true"
+
+SECRET_KEY = os.environ.get("SECRET_KEY")
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS").split(" ")
 
 
 # Application definition
@@ -113,7 +114,9 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-# postgresql://postgresql_backend_somv_user:6SI7WVmYokkepcONSDaePeeLGdCqsIEW@dpg-d0bp8kh5pdvs73cu52k0-a.oregon-postgres.render.com/postgresql_backend_somv
+database_url = os.environ.get("DATABASE_URL")
+DATABASES['default'] = dj_database_url.parse(database_url)
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
