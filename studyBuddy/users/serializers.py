@@ -1,12 +1,13 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import PasswordResetToken, UserSettings
+from .models import PasswordResetToken,UserSettings
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.exceptions import ValidationError
+from rest_framework import serializers
 from resource.models import Resource
-from typing import Dict, Any
 
 User = get_user_model()
+
 
 class UserRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=True)
@@ -16,12 +17,12 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         model = User
         fields = ('id', 'email', 'full_name', 'password', 'confirm_password', 'bio', 'avatar')
 
-    def validate(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def validate(self, data):
         if data['password'] != data['confirm_password']:
             raise ValidationError("Passwords do not match.")
         return data
 
-    def create(self, validated_data: Dict[str, Any]) -> User:
+    def create(self, validated_data):
         validated_data.pop('confirm_password')
         password = validated_data.pop('password')
         user = User(**validated_data)
@@ -29,12 +30,11 @@ class UserRegistrationSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
-
 class UserLoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
 
-    def validate(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def validate(self, data):
         email = data.get("email")
         password = data.get("password")
         
@@ -45,24 +45,28 @@ class UserLoginSerializer(serializers.Serializer):
         data['user'] = user
         return data
 
+
+
 class UserProfileSerializer(serializers.ModelSerializer):
     resources_shared = serializers.SerializerMethodField()
-
+    
     class Meta:
         model = User  
         fields = (
             'id', 'email', 'full_name', 'bio', 'avatar', 
             'study_hours', 'sessions_attended', 'resources_shared'
         )
-        read_only_fields = ('id', 'email')
+        read_only_fields = ('id', 'email')  
+    
+    def get_resources_shared(self, obj):
+        # Calculate the number of resources uploaded by the user
+        return Resource.objects.filter(uploaded_by=obj).count()
 
-    def get_resources_shared(self, obj: User) -> int:
-        return Resource.objects.filter(uploaded_by=obj).count() 
 
 class PasswordResetRequestSerializer(serializers.Serializer):
     email = serializers.EmailField()
 
-    def validate_email(self, value: str) -> str:
+    def validate_email(self, value):
         if not User.objects.filter(email=value).exists():
             raise serializers.ValidationError("No user found with this email.")
         return value
@@ -73,25 +77,21 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     new_password = serializers.CharField(write_only=True)
     confirm_password = serializers.CharField(write_only=True)
 
-    def validate(self, data: Dict[str, Any]) -> Dict[str, Any]:
+    def validate(self, data):
         if data['new_password'] != data['confirm_password']:
             raise serializers.ValidationError("Passwords do not match.")
         return data
 
-
 class LogoutSerializer(serializers.Serializer):
     refresh_token = serializers.CharField()
 
-    def validate_refresh_token(self, value: str) -> str:
+    def validate_refresh_token(self, value):
         try:
             RefreshToken(value)
         except Exception:
             raise serializers.ValidationError("Invalid refresh token.")
         return value
 
-
-class LogoutAllSerializer(serializers.Serializer):
-    refresh = serializers.CharField()
 
 
 class UserSettingsSerializer(serializers.ModelSerializer):

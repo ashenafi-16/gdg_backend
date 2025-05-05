@@ -9,7 +9,6 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
-import dj_database_url
 import os
 from pathlib import Path
 from datetime import timedelta
@@ -21,14 +20,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = 'django-insecure-c@!^a1l(r3p$9^lg_%n+@b#@$*3ur2g(ahaypv@g%)g!=3l2(5'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DEBUG","False").lower() == "true"
+DEBUG = True
 
-SECRET_KEY = os.environ.get("SECRET_KEY")
-
-ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "127.0.0.1,localhost").split(",")
-
+ALLOWED_HOSTS = [
+    'https://study-buddy-plum.vercel.app',
+    'localhost:3000',
+    'localhost:5173',
+    '127.0.0.1', 
+    'localhost',
+]
 
 
 # Application definition
@@ -50,6 +53,7 @@ INSTALLED_APPS = [
     'resource',
     'django_filters',
     'rest_framework_simplejwt.token_blacklist',
+    'corsheaders',
 ]
 
 
@@ -77,6 +81,7 @@ CHANNEL_LAYERS = {
     },
 }
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -116,9 +121,6 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-database_url = os.environ.get('DATABASE_URL', 'sqlite:///db.sqlite3')
-
-DATABASES['default'] = dj_database_url.parse(database_url)
 
 
 # Password validation
@@ -183,3 +185,11 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'ashenafimulugeta016@gmail.com'  
 EMAIL_HOST_PASSWORD = 'rupu bits xdrn lwxi'  
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+CORS_ALLOWED_ORIGINS = [
+    'https://study-buddy-plum.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5173',
+]
+
+CORS_ALLOW_CREDENTIALS = True

@@ -3,12 +3,11 @@ from .models import Resource, ResourceCategory
 from users.serializers import UserProfileSerializer
 from studygroup.serializers import StudyGroupSerializer
 from studygroup.models import StudyGroup
-from drf_spectacular.utils import extend_schema_serializer
-from typing import Dict, Any, List
+
 
 class ResourceCategorySerializer(serializers.ModelSerializer):
     """
-    Serializer for ResourceCategory model.
+    Serializer for ResourceCategory model
     """
     class Meta:
         model = ResourceCategory
@@ -16,10 +15,9 @@ class ResourceCategorySerializer(serializers.ModelSerializer):
         read_only_fields = ['slug']
 
 
-@extend_schema_serializer(component_name="DashboardResource")
 class ResourceSerializer(serializers.ModelSerializer):
     """
-    Detailed serializer for Resource listing with nested relationships.
+    Detailed serializer for Resource listing with nested relationships
     """
     uploaded_by = UserProfileSerializer(read_only=True)
     groups = StudyGroupSerializer(many=True, read_only=True)
@@ -44,28 +42,29 @@ class ResourceSerializer(serializers.ModelSerializer):
             'uploaded_by', 'uploaded_at', 'updated_at', 'download_count'
         ]
 
-    def get_file_url(self, obj: Resource) -> str:
-        """Generate absolute URL for the resource file."""
+    def get_file_url(self, obj):
+        """Generate absolute URL for the resource file"""
         request = self.context.get('request')
         return request.build_absolute_uri(obj.file.url) if obj.file and request else None
 
-    def get_file_extension(self, obj: Resource) -> str:
-        """Get uppercase file extension."""
+    def get_file_extension(self, obj):
+        """Get uppercase file extension"""
         return obj.file_extension
 
-    def get_formatted_size(self, obj: Resource) -> str:
-        """Return human-readable file size."""
+    def get_formatted_size(self, obj):
+        """Return human-readable file size"""
         return obj.formatted_size
 
-    def get_is_owner(self, obj: Resource) -> bool:
-        """Check if current user is the resource owner."""
+    def get_is_owner(self, obj):
+        """Check if current user is the resource owner"""
         request = self.context.get('request')
         return request and request.user.is_authenticated and obj.uploaded_by == request.user
 
 
 class ResourceCreateSerializer(serializers.ModelSerializer):
+    
     """
-    Serializer for Resource creation with file upload.
+    Serializer for Resource creation with file upload
     """
     groups = serializers.PrimaryKeyRelatedField(
         many=True,
@@ -103,8 +102,8 @@ class ResourceCreateSerializer(serializers.ModelSerializer):
             }
         }
 
-    def validate(self, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Validate group membership and auto-detect resource type."""
+    def validate(self, data):
+        """Validate group membership and auto-detect resource type"""
         request = self.context.get('request')
         
         # Validate group membership
@@ -134,8 +133,8 @@ class ResourceCreateSerializer(serializers.ModelSerializer):
 
         return data
 
-    def create(self, validated_data: Dict[str, Any]) -> Resource:
-        """Create resource with groups and categories."""
+    def create(self, validated_data):
+        """Create resource with groups and categories"""
         groups = validated_data.pop('groups', [])
         categories = validated_data.pop('categories', [])
         validated_data['uploaded_by'] = self.context['request'].user
@@ -148,7 +147,7 @@ class ResourceCreateSerializer(serializers.ModelSerializer):
 
 class ResourceUpdateSerializer(serializers.ModelSerializer):
     """
-    Serializer for updating Resource metadata (excluding file).
+    Serializer for updating Resource metadata (excluding file)
     """
     class Meta:
         model = Resource
@@ -162,10 +161,3 @@ class ResourceUpdateSerializer(serializers.ModelSerializer):
                 'help_text': f"Resource type: {[choice[0] for choice in Resource.RESOURCE_TYPE_CHOICES]}"
             }
         }
-
-
-class ResourceDownloadSerializer(serializers.ModelSerializer):
-    """Serializer for downloading Resource files."""
-    class Meta:
-        model = Resource
-        fields = ['id', 'file','title']
