@@ -3,6 +3,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.response import Response
 from django.shortcuts import get_object_or_404
 from rest_framework.exceptions import PermissionDenied
+from django.db import models  # Import models for query construction
 
 from .models import StudyGroup, Subject, GroupChat
 from .serializers import (
