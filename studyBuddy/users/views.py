@@ -57,6 +57,13 @@ class RegisterView(generics.CreateAPIView):
             "message": "User registered successfully"
         }, status=status.HTTP_201_CREATED)
 
+    def options(self, request, *args, **kwargs):
+        response = super().options(request, *args, **kwargs)
+        response['Access-Control-Allow-Origin'] = '*'
+        response['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
+        response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        return response
+
 
 class LoginUserView(generics.GenericAPIView):
     serializer_class = UserLoginSerializer
