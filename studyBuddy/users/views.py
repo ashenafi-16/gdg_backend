@@ -59,9 +59,10 @@ class RegisterView(generics.CreateAPIView):
 
     def options(self, request, *args, **kwargs):
         response = super().options(request, *args, **kwargs)
-        response['Access-Control-Allow-Origin'] = '*'
+        response['Access-Control-Allow-Origin'] = 'https://study-buddy-plum.vercel.app'
         response['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS'
         response['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        response['Access-Control-Max-Age'] = '86400'
         return response
 
 
