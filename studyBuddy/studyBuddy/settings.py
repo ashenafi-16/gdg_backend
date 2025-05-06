@@ -27,7 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = [
     'buddyback.onrender.com',
-    # 'gdg-backend-4.onrender.com',
+    'gdg-backend-4.onrender.com',
     'gdg-backend-9.onrender.com',  
     'localhost',
     '127.0.0.1',
