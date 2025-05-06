@@ -26,7 +26,8 @@ SECRET_KEY = 'django-insecure-c@!^a1l(r3p$9^lg_%n+@b#@$*3ur2g(ahaypv@g%)g!=3l2(5
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    'https://study-buddy-plum.vercel.app',
+    'https://buddyback.onrender.com',
+    'https://gdg-backend-4.onrender.com',
     'localhost:3000',
     'localhost:5173',
     '127.0.0.1', 
